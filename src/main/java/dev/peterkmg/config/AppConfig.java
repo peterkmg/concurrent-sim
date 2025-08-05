@@ -6,7 +6,7 @@ import java.awt.Font;
 
 @UtilityClass
 public class AppConfig {
-  public final String APP_NAME = "Concurrent Farm Simulation";
+  public final String APP_NAME = "ConcurrentSim";
 
   public final int APP_WIDTH = 640;
   public final int APP_HEIGHT = 480;
