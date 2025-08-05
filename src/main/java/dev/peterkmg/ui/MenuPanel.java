@@ -26,22 +26,19 @@ public class MenuPanel extends JPanel {
     super(new BorderLayout());
     this.invokeGameCallback = invokeGameCallback;
 
-    this.setupSelf();
-
-    this.setupHeader();
-    this.setupContent();
-    this.setupFooter();
+    setupSelf();
+    setupHeader();
+    setupContent();
   }
 
   private void setupSelf() {
     var m = AppConfig.CONTENT_MARGIN;
     var border = BorderFactory.createEmptyBorder(m, m, m, m);
-    this.setBorder(border);
+    setBorder(border);
   }
 
   private void setupHeader() {
-    var headerLabel = CompUtils.createBigLabel(AppConfig.APP_NAME, null, true);
-    this.add(headerLabel, BorderLayout.NORTH);
+    add(CompUtils.createBigLabel(AppConfig.APP_NAME, null, true), BorderLayout.NORTH);
   }
 
   private void setupContent() {
@@ -96,15 +93,14 @@ public class MenuPanel extends JPanel {
     uPanel.add(uSpinner, BorderLayout.EAST);
 
     var btnPanel = new JPanel();
-    var btnStart =
-        CompUtils.createButton("To Simulation", e -> this.invokeGameCallback.accept(this.options));
+    var btnStart = CompUtils.createButton("To Simulation", e -> invokeGameCallback.accept(options));
     btnPanel.add(btnStart, BorderLayout.CENTER);
     var btnExit = CompUtils.createButton("Exit", e -> System.exit(0));
     btnPanel.add(btnExit, BorderLayout.SOUTH);
 
-    uSpinner.addChangeListener(e -> this.options[4] = (int) uSpinner.getValue());
-    dSpinner.addChangeListener(e -> this.options[2] = (int) dSpinner.getValue());
-    sSpinner.addChangeListener(e -> this.options[3] = (int) sSpinner.getValue());
+    uSpinner.addChangeListener(e -> options[4] = (int) uSpinner.getValue());
+    dSpinner.addChangeListener(e -> options[2] = (int) dSpinner.getValue());
+    sSpinner.addChangeListener(e -> options[3] = (int) sSpinner.getValue());
     wSpinner.addChangeListener(e -> {
       var val = (int) wSpinner.getValue();
       options[0] = val;
@@ -132,12 +128,7 @@ public class MenuPanel extends JPanel {
       midPanel.add(p);
     });
 
-    this.add(midPanel, BorderLayout.CENTER);
-  }
-
-  private void setupFooter() {
-    var footerLabel = CompUtils.createSmallLabel("Made by PK", null, true);
-    this.add(footerLabel, BorderLayout.SOUTH);
+    add(midPanel, BorderLayout.CENTER);
   }
 
 }

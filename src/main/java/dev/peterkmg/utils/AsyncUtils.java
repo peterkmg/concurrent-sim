@@ -9,28 +9,29 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
+
 import dev.peterkmg.simulation.Simulation;
-import dev.peterkmg.simulation.animals.Animal;
+import dev.peterkmg.simulation.animals.AbstractAnimal;
 import dev.peterkmg.simulation.farm.Cell;
 
 public class AsyncUtils {
   public static class AnimalThreadFactory implements ThreadFactory {
 
     private int idx = 0;
-    private int dogCount;
+    private int dogsCount;
     private int sheepCount;
 
-    public AnimalThreadFactory(int dCnt, int sCnt) {
-      this.dogCount = dCnt;
-      this.sheepCount = sCnt;
+    public AnimalThreadFactory(int dogsCount, int sheepCount) {
+      this.dogsCount = dogsCount;
+      this.sheepCount = sheepCount;
     }
 
     @Override
-    public Thread newThread(Runnable r) {
-      var t = new Thread(r);
-      var label = idx < dogCount ? "Dog" : "Sheep";
-      t.setName(String.format("AnimalThreadPool-%s-%d", label, idx++));
-      return t;
+    public Thread newThread(Runnable runnable) {
+      var thread = new Thread(runnable);
+      var label = idx < dogsCount ? "Dog" : "Sheep";
+      thread.setName(String.format("AnimalThreadPool-%s-%d", label, idx++));
+      return thread;
     }
   }
 
@@ -43,68 +44,62 @@ public class AsyncUtils {
 
     public ResultSubscriber(String name, Consumer<Cell> onNext, Runnable onComplete) {
       this.name = name;
-      this.onNextCallback = onNext;
-      this.onCompleteCallback = onComplete;
+      onNextCallback = onNext;
+      onCompleteCallback = onComplete;
     }
 
     @Override
-    public void onSubscribe(Subscription s) {
-      this.subscription = s;
-      s.request(1);
+    public void onSubscribe(Subscription subscription) {
+      this.subscription = subscription;
+      subscription.request(1);
     }
 
     @Override
     public void onNext(Cell cell) {
-      this.onNextCallback.accept(cell);
-      this.subscription.request(1);
+      onNextCallback.accept(cell);
+      subscription.request(1);
     }
 
     @Override
-    public void onError(Throwable t) {
-      System.err.println(String.format("Error in %s: %s", name, t.getMessage()));
+    public void onError(Throwable throwable) {
+      System.err.println(String.format("Error in %s: %s", name, throwable.getMessage()));
     }
 
     @Override
-    public void onComplete() {
-      this.onCompleteCallback.run();
-    }
+    public void onComplete() { onCompleteCallback.run(); }
 
-    public void cancelSubscription() {
-      this.subscription.cancel();
-    }
+    public void cancelSubscription() { subscription.cancel(); }
   }
 
   public static class AnimalExecutor extends ScheduledThreadPoolExecutor {
-    private final Runnable onShutdown;
+    private final Runnable onShutdownCallback;
     private final int interval;
 
-    public AnimalExecutor(int dCnt, int sCnt, Animal[] dogs, Animal[] sheep, int ival,
-        Runnable onShut) {
-      super(dCnt + sCnt, new AnimalThreadFactory(dCnt, sCnt));
+    public AnimalExecutor(
+        int dogsCount, int sheepCount,
+        AbstractAnimal[] dogs, AbstractAnimal[] sheep,
+        int interval, Runnable onShutdown) {
+      super(dogsCount + sheepCount, new AnimalThreadFactory(dogsCount, sheepCount));
       // jumping through hoops to name threads
-      this.interval = ival;
-      this.onShutdown = onShut;
-      this.startProcessing(Stream.of(dogs, sheep).flatMap(Arrays::stream).toList());
+      this.interval = interval;
+      onShutdownCallback = onShutdown;
+      startProcessing(Stream.of(dogs, sheep).flatMap(Arrays::stream).toList());
     }
 
-    private void startProcessing(List<Animal> animals) {
-      animals.forEach(a -> this.scheduleAtFixedRate(a, 0, this.interval, TimeUnit.MILLISECONDS));
+    private void startProcessing(List<AbstractAnimal> animals) {
+      animals.forEach(a -> scheduleAtFixedRate(a, 0, interval, TimeUnit.MILLISECONDS));
     }
 
     @Override
     protected void afterExecute(Runnable r, Throwable t) {
-      if (!Simulation.getInstance().isFinished())
-        return;
-
-      this.shutdownSelf();
-      Thread.ofVirtual().start(this.onShutdown);
+      if (!Simulation.getInstance().isFinished()) { return; }
+      shutdownSelf();
+      Thread.ofVirtual().start(onShutdownCallback);
     }
 
     private synchronized void shutdownSelf() {
-      if (this.isTerminating() || this.isTerminated() || this.isShutdown())
-        return;
-
-      this.shutdown();
+      if (isTerminating() || isTerminated() || isShutdown()) { return; }
+      shutdown();
     }
   }
 }

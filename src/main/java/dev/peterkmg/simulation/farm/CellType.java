@@ -1,7 +1,11 @@
 package dev.peterkmg.simulation.farm;
 
 public enum CellType {
-  EMPTY, WALL, GATE, SHEEP, DOG;
+  EMPTY,
+  WALL,
+  GATE,
+  SHEEP,
+  DOG;
 
   public String getLabel() {
     return switch (this) {

@@ -21,9 +21,7 @@ public class CompUtils {
 
   public static JLabel createLabel(String text, Component labelFor, boolean centered) {
     var label = createLabel(text, centered);
-    if (labelFor != null) {
-      label.setLabelFor(labelFor);
-    }
+    if (labelFor != null) { label.setLabelFor(labelFor); }
     return label;
   }
 

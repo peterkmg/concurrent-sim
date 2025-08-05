@@ -7,7 +7,7 @@ import dev.peterkmg.simulation.farm.Cell;
 import dev.peterkmg.simulation.farm.CellType;
 import dev.peterkmg.simulation.farm.Farm;
 
-public class Sheep extends Animal {
+public class Sheep extends AbstractAnimal {
 
   public Sheep(Farm farm, int row, int col, int ownerId) {
     super(farm, row, col, CellType.SHEEP, ownerId);
@@ -20,16 +20,15 @@ public class Sheep extends Animal {
 
     dog.ifPresentOrElse(d -> {
       var next = hood.stream()
-          .filter(c -> c.getRow() == this.row + (this.row - d.getRow())
-              && c.getCol() == this.col + (this.col - d.getCol()) && c.getCellType() != CellType.DOG
+          .filter(c -> c.getRow() == row + (row - d.getRow())
+              && c.getCol() == col + (col - d.getCol()) && c.getCellType() != CellType.DOG
               && c.getCellType() != CellType.SHEEP)
           .findAny();
 
-      next.ifPresent(to -> this.move(self, to));
+      next.ifPresent(to -> move(self, to));
     }, () -> {
       Predicate<Cell> predicate = c -> c.getCellType() != CellType.SHEEP;
-      this.moveSelfRandomly(predicate, self, hood);
+      moveSelfRandomly(predicate, self, hood);
     });
   }
-
 }

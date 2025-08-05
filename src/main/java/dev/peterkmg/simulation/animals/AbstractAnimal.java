@@ -1,5 +1,6 @@
 package dev.peterkmg.simulation.animals;
 
+import lombok.Getter;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.function.Predicate;
@@ -10,17 +11,17 @@ import dev.peterkmg.simulation.farm.CellType;
 import dev.peterkmg.simulation.farm.Farm;
 import dev.peterkmg.utils.StreamUtils;
 
-public abstract class Animal implements Runnable {
+public abstract class AbstractAnimal implements Runnable {
 
-  protected final Farm farm;
-  protected final CellType type;
-  protected final int ownerId;
+  private final Farm farm;
 
-  protected int row;
-  protected int col;
+  protected int row, col;
 
+  @Getter
+  private final CellType type;
+  private final int ownerId;
 
-  public Animal(Farm farm, int row, int col, CellType type, int ownerId) {
+  public AbstractAnimal(Farm farm, int row, int col, CellType type, int ownerId) {
     this.farm = farm;
     this.ownerId = ownerId;
 
@@ -34,13 +35,13 @@ public abstract class Animal implements Runnable {
 
   @Override
   public void run() {
-    var self = this.farm.getCell(this.row, this.col);
+    var self = farm.getCell(row, col);
     var hood = self.getNeighborhood();
 
-    this.acquireCellLocks(hood);
+    acquireCellLocks(hood);
 
     try {
-      this.moveSelf(self, hood);
+      moveSelf(self, hood);
     } finally {
       hood.forEach(n -> n.getLock().unlock());
     }
@@ -63,38 +64,28 @@ public abstract class Animal implements Runnable {
   protected void moveSelfRandomly(Predicate<Cell> predicate, Cell self, List<Cell> hood) {
     var destinations = hood.stream().filter(predicate).collect(StreamUtils.toShuffledList());
 
-    if (destinations.isEmpty())
-      return;
+    if (destinations.isEmpty()) { return; }
 
-    var destination = destinations.get(ThreadLocalRandom.current().nextInt(destinations.size()));
-
-    this.move(self, destination);
+    move(self, destinations.get(ThreadLocalRandom.current().nextInt(destinations.size())));
   }
 
   protected void move(Cell srcCell, Cell dstCell) {
     var dstType = dstCell.getCellType();
 
     srcCell.setCellType(srcCell.getOriginalCellType());
-    dstCell.setCellType(this.type);
-    dstCell.setOwner(this.ownerId);
+    dstCell.setCellType(type);
+    dstCell.setOwner(ownerId);
 
-    this.row = dstCell.getRow();
-    this.col = dstCell.getCol();
+    row = dstCell.getRow();
+    col = dstCell.getCol();
 
-    this.submitResult(srcCell, dstCell, dstType);
+    submitResult(srcCell, dstCell, dstType);
   }
 
   private void submitResult(Cell srcCell, Cell dstCell, CellType dstType) {
     var s = Simulation.getInstance();
-
     s.submitResult(srcCell, dstCell);
-
-    if (dstType == CellType.GATE && this.type == CellType.SHEEP) {
-      s.setFinished(true);
-    }
+    if (dstType == CellType.GATE && type == CellType.SHEEP) { s.setFinished(true); }
   }
 
-  public CellType getType() {
-    return type;
-  }
 }

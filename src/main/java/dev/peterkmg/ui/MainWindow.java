@@ -10,23 +10,22 @@ public class MainWindow extends JFrame {
 
   public MainWindow() {
     super(AppConfig.APP_NAME);
-
-    this.setupSelf();
+    setupSelf();
   }
 
   private void setupSelf() {
-    this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    this.setLocationRelativeTo(null);
-    this.setResizable(false);
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    setLocationRelativeTo(null);
+    setResizable(false);
 
-    this.add(mainPanel);
+    add(mainPanel);
 
-    this.pack();
+    pack();
 
     // pop at the center of the screen
-    var w = this.getWidth();
-    var h = this.getHeight();
-    var p = this.getLocation();
-    this.setLocation(p.x - w / 2, p.y - h / 2);
+    var w = getWidth();
+    var h = getHeight();
+    var p = getLocation();
+    setLocation(p.x - w / 2, p.y - h / 2);
   }
 }

@@ -16,10 +16,6 @@ public class App {
       System.err.println("Failed to set UI style.");
     }
 
-    // invoke the main window
-    SwingUtilities.invokeLater(() -> {
-      var mw = new MainWindow();
-      mw.setVisible(true);
-    });
+    SwingUtilities.invokeLater(() -> new MainWindow().setVisible(true));
   }
 }

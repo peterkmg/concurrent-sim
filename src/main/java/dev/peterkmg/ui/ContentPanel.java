@@ -18,28 +18,25 @@ public class ContentPanel extends JPanel {
   public ContentPanel() {
     super();
 
-    this.setupSelf();
-    this.transitionToMenu();
+    setupSelf();
+    transitionToMenu();
   }
 
   private void setupSelf() {
     var d = new Dimension(AppConfig.APP_WIDTH, AppConfig.APP_HEIGHT);
-    this.setMinimumSize(d);
-    this.setPreferredSize(d);
-
+    setMinimumSize(d);
+    setPreferredSize(d);
 
     var m = AppConfig.CONTENT_MARGIN;
     var border = BorderFactory.createEmptyBorder(m, m, m, m);
-    this.setBorder(border);
+    setBorder(border);
 
-    this.setLayout(cardLayout);
-    this.add(menuPanel, "menu");
-    this.add(gamePanel, "game");
+    setLayout(cardLayout);
+    add(menuPanel, "menu");
+    add(gamePanel, "game");
   }
 
-  public void transitionToMenu() {
-    cardLayout.show(this, "menu");
-  }
+  public void transitionToMenu() { cardLayout.show(this, "menu"); }
 
   public void transitionToGame(int[] opts) {
     Simulation.getInstance().initSimulation(opts[0], opts[1], opts[2], opts[3], opts[4]);

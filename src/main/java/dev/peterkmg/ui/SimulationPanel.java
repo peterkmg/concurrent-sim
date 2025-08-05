@@ -37,77 +37,71 @@ public class SimulationPanel extends JPanel {
     super(new BorderLayout(20, 20));
     this.invokeMenuCallback = invokeMenuCallback;
 
-    this.setupSelf();
-    this.setupHeader();
-    this.setupBoard();
-    this.setupFooter();
+    setupSelf();
+    setupHeader();
+    setupFooter();
   }
 
   private void setupSelf() {
-    this.add(header, BorderLayout.NORTH);
-    this.add(board, BorderLayout.CENTER);
-    this.add(footer, BorderLayout.SOUTH);
+    add(header, BorderLayout.NORTH);
+    add(board, BorderLayout.CENTER);
+    add(footer, BorderLayout.SOUTH);
   }
 
   private void setupHeader() {
-    this.btnStart = new JButton("Start Simulation");
-    this.btnStart.addActionListener(e -> this.toggleStartStop());
-    header.add(this.btnStart);
+    btnStart = new JButton("Start Simulation");
+    btnStart.addActionListener(e -> toggleStartStop());
+    header.add(btnStart);
 
-    this.btnStop = new JButton("Stop Simulation");
-    this.btnStop.addActionListener(e -> this.toggleStartStop());
-    this.btnStop.setEnabled(false);
-    header.add(this.btnStop);
+    btnStop = new JButton("Stop Simulation");
+    btnStop.addActionListener(e -> toggleStartStop());
+    btnStop.setEnabled(false);
+    header.add(btnStop);
 
-    this.btnReset = new JButton("Reset Simulation");
-    this.btnReset.addActionListener(e -> this.resetSimulation());
-    header.add(this.btnReset);
-  }
-
-  private void setupBoard() {
-    // board.setOpaque(true);
-    // board.setBackground(Color.WHITE);
+    btnReset = new JButton("Reset Simulation");
+    btnReset.addActionListener(e -> resetSimulation());
+    header.add(btnReset);
   }
 
   private void setupFooter() {
     var btnMenu = new JButton("Back to menu");
     btnMenu.addActionListener(e -> {
-      if (this.isRunning)
-        this.toggleStartStop();
-
-      this.shutdownSubscriber();
-      this.invokeMenuCallback.run(); // return to menu
+      if (isRunning) { toggleStartStop(); }
+      shutdownSubscriber();
+      invokeMenuCallback.run(); // return to menu
     });
+
     footer.add(btnMenu);
   }
 
   private void toggleStartStop() {
-    if (this.isRunning) {
-      this.stopSimulation();
+    if (isRunning) {
+      stopSimulation();
     } else {
-      this.startSimulation();
+      startSimulation();
     }
-    this.isRunning = !this.isRunning;
+
+    isRunning = !isRunning;
   }
 
   private void startSimulation() {
     Simulation.getInstance().startSimulation();
-    this.btnStart.setEnabled(false);
-    this.btnReset.setEnabled(false);
-    this.btnStop.setEnabled(true);
+    btnStart.setEnabled(false);
+    btnReset.setEnabled(false);
+    btnStop.setEnabled(true);
   }
 
   private void stopSimulation() {
     Simulation.getInstance().stopSimulation();
-    this.btnStop.setEnabled(false);
-    this.btnStart.setEnabled(true);
-    this.btnReset.setEnabled(true);
+    btnStop.setEnabled(false);
+    btnStart.setEnabled(true);
+    btnReset.setEnabled(true);
   }
 
   private void resetSimulation() {
     Simulation.getInstance().resetSimulation();
-    this.shutdownSubscriber();
-    this.initSimulationGUI();
+    shutdownSubscriber();
+    initSimulationGUI();
   }
 
   private Border createBorder(int row, int col, int rows, int cols, CellType ct) {
@@ -137,67 +131,64 @@ public class SimulationPanel extends JPanel {
     var rows = s.getRows();
     var cols = s.getCols();
 
-    this.board.removeAll();
+    board.removeAll();
     var layout = new GridLayout(rows, cols);
-    this.board.setLayout(layout);
+    board.setLayout(layout);
 
     Arrays.stream(s.getField()).flatMap(Arrays::stream).forEach(cell -> {
       var ct = cell.getCellType();
       String text = "";
       if (ct == CellType.DOG) {
         text = String.valueOf(cell.getOwner());
-      } else if (ct == CellType.SHEEP) {
-        text = String.valueOf((char) cell.getOwner());
-      }
+      } else if (ct == CellType.SHEEP) { text = String.valueOf((char) cell.getOwner()); }
       var color = Color.decode(ct.getColor());
       var label = new JLabel(text, JLabel.CENTER);
       label.setOpaque(true);
       label.setFont(AppConfig.FONT_SMALL);
       label.setBackground(color);
-      label.setBorder(this.createBorder(cell.getRow(), cell.getCol(), rows, cols, ct));
+      label.setBorder(createBorder(cell.getRow(), cell.getCol(), rows, cols, ct));
       board.add(label);
     });
 
-    this.btnStart.setEnabled(true);
-    this.btnStop.setEnabled(false);
-    this.btnReset.setEnabled(true);
+    btnStart.setEnabled(true);
+    btnStop.setEnabled(false);
+    btnReset.setEnabled(true);
 
-    this.board.revalidate();
-    this.board.repaint();
+    board.revalidate();
+    board.repaint();
 
-    this.initSubscriber();
+    initSubscriber();
   }
 
   private void initSubscriber() {
-    this.resultSubscriber =
+    resultSubscriber =
         new ResultSubscriber("UISubscriber", this::subscriberUpdate, this::subscriberFinish);
-    Simulation.getInstance().subscribe(this.resultSubscriber);
+    Simulation.getInstance().subscribe(resultSubscriber);
   }
 
   private void subscriberUpdate(Cell cell) {
     var idx = cell.getRow() * Simulation.getInstance().getCols() + cell.getCol();
-    var label = (JLabel) this.board.getComponent(idx);
-    var text = "";
-    if (cell.getCellType() == CellType.DOG) {
-      text = String.valueOf(cell.getOwner());
-    } else if (cell.getCellType() == CellType.SHEEP) {
-      text = String.valueOf((char) cell.getOwner());
-    }
+    var label = (JLabel) board.getComponent(idx);
+
+    var text = switch (cell.getCellType()) {
+      case DOG -> String.valueOf(cell.getOwner());
+      case SHEEP -> String.valueOf((char) cell.getOwner());
+      default -> "";
+    };
+
     label.setText(text);
     label.setBackground(Color.decode(cell.getCellType().getColor()));
   }
 
   private void subscriberFinish() {
-    this.isRunning = false;
-    this.btnStart.setEnabled(false);
-    this.btnStop.setEnabled(false);
-    this.btnReset.setEnabled(true);
+    isRunning = false;
+    btnStart.setEnabled(false);
+    btnStop.setEnabled(false);
+    btnReset.setEnabled(true);
     JOptionPane.showMessageDialog(this, "Simulation finished successfully.", "Complete",
         JOptionPane.WARNING_MESSAGE);
   }
 
-  private void shutdownSubscriber() {
-    this.resultSubscriber.cancelSubscription();
-  }
+  private void shutdownSubscriber() { resultSubscriber.cancelSubscription(); }
 
 }

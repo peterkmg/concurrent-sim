@@ -1,5 +1,7 @@
 package dev.peterkmg.simulation.farm;
 
+import lombok.Getter;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,23 +15,25 @@ import dev.peterkmg.utils.StreamUtils;
 
 public class Farm {
 
+  @Getter
+  private final int rows, cols;
+  @Getter
   private final Cell[][] field;
+  @Getter
   private final Dog[] dogs;
+  @Getter
   private final Sheep[] sheep;
-
-  private final int rows;
-  private final int cols;
 
   public Farm(int rows, int cols, int dogsCount, int sheepCount) {
     this.rows = rows;
     this.cols = cols;
 
-    this.field = this.initField(rows, cols);
+    field = initField(rows, cols);
 
-    this.assignNeighborhoods();
+    assignNeighborhoods();
 
-    this.dogs = this.initDogs(dogsCount);
-    this.sheep = this.initSheep(sheepCount);
+    dogs = initDogs(dogsCount);
+    sheep = initSheep(sheepCount);
   }
 
   private Cell[][] initField(int rows, int cols) {
@@ -58,12 +62,12 @@ public class Farm {
   }
 
   private void assignNeighborhoods() {
-    Arrays.stream(this.field).flatMap(Arrays::stream).parallel().forEach(c -> {
+    Arrays.stream(field).flatMap(Arrays::stream).parallel().forEach(c -> {
       var list = IntStream.range(-1, 2)
           .mapToObj(dr -> IntStream.range(-1, 2)
               .filter(dc -> c.getRow() + dr >= 0 && c.getRow() + dr < rows && c.getCol() + dc >= 0
                   && c.getCol() + dc < cols)
-              .mapToObj(dc -> this.field[c.getRow() + dr][c.getCol() + dc]).toList())
+              .mapToObj(dc -> field[c.getRow() + dr][c.getCol() + dc]).toList())
           .flatMap(List::stream).toList();
 
       c.setNeighborhood(list);
@@ -76,13 +80,13 @@ public class Farm {
     // distribute dogs to zones equally
     var dCells = IntStream.range(1, 10).filter(i -> i != 5).limit(dogsCount).boxed()
         .collect(StreamUtils.toShuffledList()).stream()
-        .map(i -> Arrays.stream(this.field).flatMap(Arrays::stream).filter(c -> c.getZoneId() == i)
+        .map(i -> Arrays.stream(field).flatMap(Arrays::stream).filter(c -> c.getZoneId() == i)
             .collect(StreamUtils.toShuffledList()).subList(0, minDogsPerZone))
         .flatMap(List::stream).collect(Collectors.toCollection(ArrayList::new));
 
     // distribute rest of the dogs randomly
     if (dogsCount > dCells.size()) {
-      dCells.addAll(Arrays.stream(this.field).flatMap(Arrays::stream)
+      dCells.addAll(Arrays.stream(field).flatMap(Arrays::stream)
           .filter(c -> !dCells.contains(c) && c.getZoneId() != 5)
           .collect(StreamUtils.toShuffledList()).subList(0, dogsCount - dCells.size()));
     }
@@ -94,7 +98,7 @@ public class Farm {
   }
 
   public Sheep[] initSheep(int sheepCount) {
-    var sCells = Arrays.stream(this.field).flatMap(Arrays::stream).filter(c -> c.getZoneId() == 5)
+    var sCells = Arrays.stream(field).flatMap(Arrays::stream).filter(c -> c.getZoneId() == 5)
         .collect(StreamUtils.toShuffledList()).subList(0, sheepCount);
 
     int[] id = {'A'};
@@ -102,35 +106,9 @@ public class Farm {
         .toArray(Sheep[]::new);
   }
 
-  public int getRows() {
-    return this.rows;
-  }
+  public Cell getCell(int row, int col) { return field[row][col]; }
 
-  public int getCols() {
-    return this.cols;
-  }
+  public int getDogsCount() { return dogs.length; }
+  public int getSheepCount() { return sheep.length; }
 
-  public Dog[] getDogs() {
-    return this.dogs;
-  }
-
-  public Sheep[] getSheep() {
-    return this.sheep;
-  }
-
-  public int getDogsCount() {
-    return this.dogs.length;
-  }
-
-  public int getSheepCount() {
-    return this.sheep.length;
-  }
-
-  public Cell getCell(int row, int col) {
-    return this.field[row][col];
-  }
-
-  public Cell[][] getField() {
-    return this.field;
-  }
 }

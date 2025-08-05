@@ -15,69 +15,65 @@ public class Simulation {
 
   private SubmissionPublisher<Cell> resultPublisher;
 
-  public AnimalExecutor dogsExec;
-  public AnimalExecutor sheepExec;
   public AnimalExecutor animalExec;
 
   private Farm farm;
-
   private int updateInterval;
-  public boolean isFinished = false;
+  private boolean finished = false;
 
   private Simulation() {}
 
   public static Simulation getInstance() {
-    if (instance == null)
-      instance = new Simulation();
+    if (instance == null) { instance = new Simulation(); }
     return instance;
   }
 
   public void initSimulation(int rows, int cols, int dogsCount, int sheepCount, int update) {
-    this.updateInterval = update;
-    this.farm = new Farm(rows, cols, dogsCount, sheepCount);
-    this.resultPublisher = new SubmissionPublisher<>();
+    updateInterval = update;
+    farm = new Farm(rows, cols, dogsCount, sheepCount);
+    resultPublisher = new SubmissionPublisher<>();
   }
 
   public void resetSimulation() {
-    var rows = this.farm.getRows();
-    var cols = this.farm.getCols();
-    var dogsCount = this.farm.getDogsCount();
-    var sheepCount = this.farm.getSheepCount();
-    this.initSimulation(rows, cols, dogsCount, sheepCount, this.updateInterval);
+    var rows = getRows();
+    var cols = getCols();
+    var dogsCount = farm.getDogsCount();
+    var sheepCount = farm.getSheepCount();
+    initSimulation(rows, cols, dogsCount, sheepCount, updateInterval);
   }
 
   public void startSimulation() {
-    this.isFinished = false;
-    var dogs = this.farm.getDogs();
-    var dogsCount = this.farm.getDogsCount();
-    var sheep = this.farm.getSheep();
-    var sheepCount = this.farm.getSheepCount();
+    finished = false;
+    var dogs = farm.getDogs();
+    var dogsCount = farm.getDogsCount();
+    var sheep = farm.getSheep();
+    var sheepCount = farm.getSheepCount();
 
-    this.animalExec = new AnimalExecutor(dogsCount, sheepCount, dogs, sheep, this.updateInterval,
+    animalExec = new AnimalExecutor(dogsCount, sheepCount, dogs, sheep, updateInterval,
         this::onExecShutdown);
   }
 
   private void onExecShutdown() {
     try {
-      var at = this.animalExec.awaitTermination(this.updateInterval, TimeUnit.MILLISECONDS);
+      var at = animalExec.awaitTermination(updateInterval, TimeUnit.MILLISECONDS);
       if (!at) {
         System.err.println("Animal thread pool did not shutdown gracefully");
-        this.animalExec.shutdownNow();
+        animalExec.shutdownNow();
       }
     } catch (InterruptedException e) {
       System.err.println("Error while shutting down thread pools");
       Thread.currentThread().interrupt();
     } finally {
-      this.resultPublisher.close();
+      resultPublisher.close();
     }
   }
 
   public void stopSimulation() {
     try {
-      this.animalExec.shutdown();
-      if (!this.animalExec.awaitTermination(this.updateInterval, TimeUnit.MILLISECONDS)) {
+      animalExec.shutdown();
+      if (!animalExec.awaitTermination(updateInterval, TimeUnit.MILLISECONDS)) {
         System.err.println("Animal thread pool did not shutdown gracefully");
-        this.animalExec.shutdownNow();
+        animalExec.shutdownNow();
       }
     } catch (InterruptedException e) {
       System.err.println("Error while shutting down thread pools");
@@ -85,31 +81,15 @@ public class Simulation {
     }
   }
 
-  public Cell[][] getField() {
-    return farm.getField();
-  }
+  public Cell[][] getField() { return farm.getField(); }
 
-  public int getRows() {
-    return farm.getRows();
-  }
+  public int getRows() { return farm.getRows(); }
+  public int getCols() { return farm.getCols(); }
 
-  public int getCols() {
-    return farm.getCols();
-  }
+  public void submitResult(Cell... cells) { Arrays.stream(cells).forEach(resultPublisher::submit); }
 
-  public void submitResult(Cell... cells) {
-    Arrays.stream(cells).forEach(resultPublisher::submit);
-  }
+  public void subscribe(Subscriber<Cell> subscriber) { resultPublisher.subscribe(subscriber); }
 
-  public void subscribe(Subscriber<Cell> subscriber) {
-    this.resultPublisher.subscribe(subscriber);
-  }
-
-  public synchronized boolean isFinished() {
-    return this.isFinished;
-  }
-
-  public synchronized void setFinished(boolean isFinished) {
-    this.isFinished = isFinished;
-  }
+  public synchronized boolean isFinished() { return finished; }
+  public synchronized void setFinished(boolean isFinished) { finished = isFinished; }
 }
